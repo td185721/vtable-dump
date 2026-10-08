@@ -235,20 +235,29 @@ std::vector<Vtable> find_vtables(const PEView& view, const std::vector<COLInfo>&
 }  // namespace
 
 int main(int argc, char** argv) {
-    if (argc < 2) {
-        std::fprintf(stderr, "usage: %s <file.exe|file.dll> [--max-slots N]\n",
+    std::size_t max_slots = 32;
+    std::string filter;
+    const char* path = nullptr;
+
+    for (int i = 1; i < argc; ++i) {
+        if (std::strcmp(argv[i], "--max-slots") == 0 && i + 1 < argc) {
+            max_slots = static_cast<std::size_t>(std::atoi(argv[++i]));
+        } else if ((std::strcmp(argv[i], "--filter") == 0 ||
+                    std::strcmp(argv[i], "-f") == 0) && i + 1 < argc) {
+            filter = argv[++i];
+        } else if (!path) {
+            path = argv[i];
+        }
+    }
+
+    if (!path) {
+        std::fprintf(stderr,
+                     "usage: %s [--max-slots N] [--filter|-f SUBSTRING] <file.exe|file.dll>\n",
                      argc ? argv[0] : "vtable-dump");
         return 2;
     }
 
-    std::size_t max_slots = 32;
-    for (int i = 2; i < argc; ++i) {
-        if (std::strcmp(argv[i], "--max-slots") == 0 && i + 1 < argc) {
-            max_slots = static_cast<std::size_t>(std::atoi(argv[++i]));
-        }
-    }
-
-    auto image = read_file(argv[1]);
+    auto image = read_file(path);
     auto view  = load_pe(image);
 
     std::printf("[*] scanning for Complete Object Locators ...\n");
@@ -257,9 +266,17 @@ int main(int argc, char** argv) {
 
     std::printf("[*] scanning for vtables that reference them ...\n");
     const auto vtables = find_vtables(view, cols);
-    std::printf("    found %zu vtable(s)\n\n", vtables.size());
+    if (filter.empty()) {
+        std::printf("    found %zu vtable(s)\n\n", vtables.size());
+    } else {
+        std::printf("    found %zu vtable(s); filtering by '%s'\n\n",
+                    vtables.size(), filter.c_str());
+    }
 
+    std::size_t shown = 0;
     for (const auto& vt : vtables) {
+        if (!filter.empty() && vt.class_name.find(filter) == std::string::npos) continue;
+        ++shown;
         std::printf("%s\n", vt.class_name.c_str());
         std::printf("  vtable RVA : 0x%08lx\n", static_cast<unsigned long>(vt.vtable_rva));
         std::printf("  slot count : %zu\n", vt.fn_rvas.size());
@@ -273,6 +290,10 @@ int main(int argc, char** argv) {
                         vt.fn_rvas.size() - to_print);
         }
         std::printf("\n");
+    }
+    if (!filter.empty()) {
+        std::printf("[*] %zu of %zu vtable(s) matched the filter\n",
+                    shown, vtables.size());
     }
     return 0;
 }

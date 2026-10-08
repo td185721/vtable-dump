@@ -47,10 +47,15 @@ cmake --build build --config Release
 ```powershell
 vtable-dump.exe path\to\binary.exe
 vtable-dump.exe path\to\binary.exe --max-slots 128
+vtable-dump.exe --filter exception path\to\binary.exe
 ```
 
-`--max-slots N` controls how many function pointers to print per vtable
-(default 32). The remaining slot count is still reported.
+### Flags
+
+| flag | effect |
+|------|--------|
+| `--max-slots N` | print at most N function pointers per vtable (default 32). the remaining slot count is still reported. |
+| `--filter SUB`, `-f SUB` | only show vtables whose mangled class name contains the substring. useful for drilling into a specific class in a binary with hundreds of vtables. |
 
 ## Example output
 
