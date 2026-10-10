@@ -12,6 +12,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - name: Fetch the annotated tag
+        # actions/checkout fetches tags as lightweight refs, which drops the
+        # tag message that --notes-from-tag reads.
+        run: git fetch --force origin "refs/tags/$GITHUB_REF_NAME:refs/tags/$GITHUB_REF_NAME"
       - name: Create release from the tag message
         run: gh release create "$GITHUB_REF_NAME" --title "vtable-dump $GITHUB_REF_NAME" --notes-from-tag --verify-tag
         env:
