@@ -3,15 +3,15 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/td185721/vtable-dump/actions/workflows/ci.yml"><img src="https://github.com/td185721/vtable-dump/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://github.com/td185721/vtable-dump/releases/latest"><img src="https://img.shields.io/github/v/release/td185721/vtable-dump?color=f778ba" alt="Latest release"></a>
+  <a href="https://github.com/sheranton/vtable-dump/actions/workflows/ci.yml"><img src="https://github.com/sheranton/vtable-dump/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/sheranton/vtable-dump/releases/latest"><img src="https://img.shields.io/github/v/release/sheranton/vtable-dump?color=f778ba" alt="Latest release"></a>
   <img src="https://img.shields.io/badge/C%2B%2B-17-00599C?logo=cplusplus&logoColor=white" alt="C++17">
   <img src="https://img.shields.io/badge/runs%20on-Windows%20%7C%20Linux%20%7C%20macOS-30363d" alt="Runs on Windows, Linux and macOS">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license"></a>
 </p>
 
 <p align="center">
-  <sub><b>Toolkit:</b> <a href="https://github.com/td185721/pe-walker">pe-walker</a> · <a href="https://github.com/td185721/pe-diff">pe-diff</a> · <a href="https://github.com/td185721/rtti-dump">rtti-dump</a> · <b>vtable-dump</b> · <a href="https://github.com/td185721/pattern-scan">pattern-scan</a> · <a href="https://github.com/td185721/unwind-map">unwind-map</a></sub>
+  <sub><b>Toolkit:</b> <a href="https://github.com/sheranton/pe-walker">pe-walker</a> · <a href="https://github.com/sheranton/pe-diff">pe-diff</a> · <a href="https://github.com/sheranton/rtti-dump">rtti-dump</a> · <b>vtable-dump</b> · <a href="https://github.com/sheranton/pattern-scan">pattern-scan</a> · <a href="https://github.com/sheranton/unwind-map">unwind-map</a></sub>
 </p>
 
 `vtable-dump` finds the virtual function tables of C++ classes in x64 Windows binaries built with MSVC and lists the function in every slot. In a stripped binary, vtables are the fastest way from "there is a class here" to "here is its code": every virtual method of every polymorphic class, grouped by class, with no disassembly involved.
@@ -57,13 +57,13 @@ MSVC places a pointer to the class's Complete Object Locator in the slot just be
   <img src="docs/how-it-works.svg" width="100%" alt="An io::Buffer object with two vtable pointers, its two vtables, and the code their slots point to, including a this-adjusting thunk">
 </p>
 
-1. Find every Complete Object Locator in `.rdata`: signature `1`, and a `pSelf` field equal to its own RVA (the same validation as [rtti-dump](https://github.com/td185721/rtti-dump)).
+1. Find every Complete Object Locator in `.rdata`: signature `1`, and a `pSelf` field equal to its own RVA (the same validation as [rtti-dump](https://github.com/sheranton/rtti-dump)).
 2. Compute each COL's absolute address (`ImageBase + RVA`) and scan `.rdata` for 8-byte values equal to it. Each hit is the slot just before a vtable.
 3. Walk forward while the entries point into an executable section; those are the virtual functions. Stop at the first null or non-code pointer.
 
 ## Install
 
-Download a prebuilt binary for Windows x64, Linux x64 (statically linked) or macOS arm64 from the [latest release](https://github.com/td185721/vtable-dump/releases/latest), or build from source with CMake 3.15+ and any C++17 compiler:
+Download a prebuilt binary for Windows x64, Linux x64 (statically linked) or macOS arm64 from the [latest release](https://github.com/sheranton/vtable-dump/releases/latest), or build from source with CMake 3.15+ and any C++17 compiler:
 
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
