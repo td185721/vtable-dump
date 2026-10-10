@@ -16,6 +16,10 @@
 
 `vtable-dump` finds the virtual function tables of C++ classes in x64 Windows binaries built with MSVC and lists the function in every slot. In a stripped binary, vtables are the fastest way from "there is a class here" to "here is its code": every virtual method of every polymorphic class, grouped by class, with no disassembly involved.
 
+<p align="center">
+  <img src="docs/demo.svg" width="640" alt="Animated terminal demo: vtable-dump --demangle showing the two vtables of io::Buffer in color">
+</p>
+
 ## Example
 
 Real output for the test fixture, built from [`tests/fixtures/sample.cpp`](tests/fixtures/sample.cpp). `io::Buffer` inherits from both `io::Reader` and `io::Writer`, so it has two vtables, one per base subobject:
@@ -49,14 +53,9 @@ The first table is the `Reader` view: the destructor and `read()`. The second is
 
 MSVC places a pointer to the class's Complete Object Locator in the slot just before each vtable:
 
-```text
-            ┌──────────────────────────────┐
-vtable - 8  │ &CompleteObjectLocator       │ ──► RTTI: class name, hierarchy
-vtable + 0  │ &virtual function 0          │ ──► .text
-vtable + 8  │ &virtual function 1          │ ──► .text
-   ...      │ ...                          │
-            └──────────────────────────────┘
-```
+<p align="center">
+  <img src="docs/how-it-works.svg" width="100%" alt="An io::Buffer object with two vtable pointers, its two vtables, and the code their slots point to, including a this-adjusting thunk">
+</p>
 
 1. Find every Complete Object Locator in `.rdata`: signature `1`, and a `pSelf` field equal to its own RVA (the same validation as [rtti-dump](https://github.com/td185721/rtti-dump)).
 2. Compute each COL's absolute address (`ImageBase + RVA`) and scan `.rdata` for 8-byte values equal to it. Each hit is the slot just before a vtable.
@@ -75,13 +74,15 @@ ctest --test-dir build -C Release      # optional: run the test suite
 ## Usage
 
 ```text
-vtable-dump [--max-slots N] [--filter|-f SUBSTRING] <file.exe|file.dll>
+vtable-dump [--max-slots N] [--filter|-f SUBSTRING] [--demangle|-d] [--color auto|always|never] <file.exe|file.dll>
 ```
 
 | Flag | Effect |
 |---|---|
 | `--max-slots N` | Print at most N slots per vtable (default 32). The full slot count is still shown. |
-| `--filter SUB`, `-f SUB` | Only show vtables whose mangled class name contains `SUB`. |
+| `--filter SUB`, `-f SUB` | Only show vtables whose class name, mangled or demangled, contains `SUB` (`-f io::Buffer` works). |
+| `--demangle`, `-d` | Print `io::Buffer` instead of `.?AUBuffer@io@@`. |
+| `--color WHEN` | `auto` (default) colors output only on a terminal; `always` and `never` force it. Setting `NO_COLOR` turns colors off. |
 
 Exit status is `0` on success, `1` for an unreadable, malformed or non-x64 file, and `2` for a usage error.
 
@@ -100,7 +101,7 @@ Exit status is `0` on success, `1` for an unreadable, malformed or non-x64 file,
 
 ## Testing
 
-`ctest` compares the output for the fixture DLL with golden files: all vtables, `--filter` and `--max-slots`. It also checks that x86 input and missing arguments fail with the right exit codes. CI runs on Windows (MSVC), Linux (GCC) and macOS (Clang), and cross-builds with MinGW-w64. When the tool moved from `<windows.h>` to a portable PE header, its output was compared with the previous build on 250 `System32` DLLs, and there were no differences. Header, section table and name reads are bounds-checked against the file.
+`ctest` compares the output for the fixture DLL with golden files: all vtables, `--filter`, `--max-slots`, `--demangle` and colored output. It also checks that x86 input and missing arguments fail with the right exit codes. CI runs on Windows (MSVC), Linux (GCC) and macOS (Clang), and cross-builds with MinGW-w64. When the tool moved from `<windows.h>` to a portable PE header, its output was compared with the previous build on 250 `System32` DLLs, and there were no differences. Header, section table and name reads are bounds-checked against the file.
 
 ## License
 

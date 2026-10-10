@@ -1,0 +1,89 @@
+[2m[*] scanning for Complete Object Locators ...[0m
+[2m    found 14 COL(s)[0m
+[2m[*] scanning for vtables that reference them ...[0m
+[2m    found 14 vtable(s)[0m
+
+[1m[35m.?AUCircle@shapes@@[0m
+  vtable RVA : [36m0x000031c0[0m
+  slot count : [1m3[0m
+    [2m[ 0][0m fn @ RVA [36m0x00001040[0m
+    [2m[ 1][0m fn @ RVA [36m0x00001130[0m
+    [2m... (1 more; use --max-slots N to show more)[0m
+
+[1m[35m.?AUSquare@shapes@@[0m
+  vtable RVA : [36m0x000031e8[0m
+  slot count : [1m3[0m
+    [2m[ 0][0m fn @ RVA [36m0x00001040[0m
+    [2m[ 1][0m fn @ RVA [36m0x00001150[0m
+    [2m... (1 more; use --max-slots N to show more)[0m
+
+[1m[35m.?AUBuffer@io@@[0m
+  vtable RVA : [36m0x00003208[0m
+  slot count : [1m2[0m
+    [2m[ 0][0m fn @ RVA [36m0x00001010[0m
+    [2m[ 1][0m fn @ RVA [36m0x000011c0[0m
+
+[1m[35m.?AUBuffer@io@@[0m
+  vtable RVA : [36m0x00003220[0m
+  slot count : [1m3[0m
+    [2m[ 0][0m fn @ RVA [36m0x00001000[0m
+    [2m[ 1][0m fn @ RVA [36m0x000011f0[0m
+    [2m... (1 more; use --max-slots N to show more)[0m
+
+[1m[35m.?AUNode@@[0m
+  vtable RVA : [36m0x00003240[0m
+  slot count : [1m2[0m
+    [2m[ 0][0m fn @ RVA [36m0x000010d0[0m
+    [2m[ 1][0m fn @ RVA [36m0x00001190[0m
+
+[1m[35m.?AULeft@@[0m
+  vtable RVA : [36m0x00003258[0m
+  slot count : [1m2[0m
+    [2m[ 0][0m fn @ RVA [36m0x000010a0[0m
+    [2m[ 1][0m fn @ RVA [36m0x00001180[0m
+
+[1m[35m.?AURight@@[0m
+  vtable RVA : [36m0x00003270[0m
+  slot count : [1m1[0m
+    [2m[ 0][0m fn @ RVA [36m0x000011e0[0m
+
+[1m[35m.?AURight@@[0m
+  vtable RVA : [36m0x00003280[0m
+  slot count : [1m2[0m
+    [2m[ 0][0m fn @ RVA [36m0x00001100[0m
+    [2m[ 1][0m fn @ RVA [36m0x00001190[0m
+
+[1m[35m.?AUDiamond@@[0m
+  vtable RVA : [36m0x00003298[0m
+  slot count : [1m1[0m
+    [2m[ 0][0m fn @ RVA [36m0x000011d0[0m
+
+[1m[35m.?AUDiamond@@[0m
+  vtable RVA : [36m0x000032a8[0m
+  slot count : [1m2[0m
+    [2m[ 0][0m fn @ RVA [36m0x00001070[0m
+    [2m[ 1][0m fn @ RVA [36m0x00001170[0m
+
+[1m[35m.?AVtype_info@@[0m
+  vtable RVA : [36m0x000032e0[0m
+  slot count : [1m1[0m
+    [2m[ 0][0m fn @ RVA [36m0x0000143c[0m
+
+[1m[35m.?AVexception@std@@[0m
+  vtable RVA : [36m0x000032f8[0m
+  slot count : [1m2[0m
+    [2m[ 0][0m fn @ RVA [36m0x000018c4[0m
+    [2m[ 1][0m fn @ RVA [36m0x00001948[0m
+
+[1m[35m.?AVbad_alloc@std@@[0m
+  vtable RVA : [36m0x00003328[0m
+  slot count : [1m2[0m
+    [2m[ 0][0m fn @ RVA [36m0x000018c4[0m
+    [2m[ 1][0m fn @ RVA [36m0x00001948[0m
+
+[1m[35m.?AVbad_array_new_length@std@@[0m
+  vtable RVA : [36m0x00003350[0m
+  slot count : [1m2[0m
+    [2m[ 0][0m fn @ RVA [36m0x000018c4[0m
+    [2m[ 1][0m fn @ RVA [36m0x00001948[0m
+

@@ -24,6 +24,7 @@
 // files on any host OS.
 
 #include "pe_format.hpp"
+#include "term.hpp"
 
 #include <cstdint>
 #include <cstdio>
@@ -34,6 +35,48 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+namespace demangle {
+
+// Simple MSVC type_info name demangler.
+// Handles the common ".?A[VUW]Name@ns@...@@" form by stripping the
+// RTTI prefix (`.?A`), stripping the trailing `@@`, splitting the body
+// on `@`, reversing, and joining with `::`.
+//
+// Template names (identified by the `?$` sequence) are returned as-is;
+// their parameter grammar is non-trivial to parse and out of scope here.
+inline std::string type_info(const std::string& mangled) {
+    if (mangled.size() < 6) return mangled;
+    if (mangled[0] != '.' || mangled[1] != '?' || mangled[2] != 'A') return mangled;
+    const char tag = mangled[3];
+    if (tag != 'V' && tag != 'U' && tag != 'W') return mangled;
+    if (mangled.compare(mangled.size() - 2, 2, "@@") != 0) return mangled;
+
+    const auto body = mangled.substr(4, mangled.size() - 4 - 2);
+    if (body.find("?$") != std::string::npos) return mangled;  // template, bail
+
+    std::vector<std::string> parts;
+    std::string cur;
+    for (char c : body) {
+        if (c == '@') {
+            if (!cur.empty()) parts.push_back(cur);
+            cur.clear();
+        } else {
+            cur.push_back(c);
+        }
+    }
+    if (!cur.empty()) parts.push_back(cur);
+    if (parts.empty()) return mangled;
+
+    std::string out;
+    for (std::size_t i = parts.size(); i > 0; --i) {
+        if (!out.empty()) out += "::";
+        out += parts[i - 1];
+    }
+    return out;
+}
+
+}  // namespace demangle
 
 namespace {
 
@@ -260,63 +303,79 @@ std::vector<Vtable> find_vtables(const PEView& view, const std::vector<COLInfo>&
 int main(int argc, char** argv) {
     std::size_t max_slots = 32;
     std::string filter;
+    bool demangle_names = false;
+    bool bad_flag = false;
+    term::Mode color = term::Mode::Auto;
     const char* path = nullptr;
 
     for (int i = 1; i < argc; ++i) {
-        if (std::strcmp(argv[i], "--max-slots") == 0 && i + 1 < argc) {
+        const int cf = term::parse_flag(argc, argv, i, color);
+        if (cf != 0) {
+            bad_flag |= cf < 0;
+        } else if (std::strcmp(argv[i], "--max-slots") == 0 && i + 1 < argc) {
             max_slots = static_cast<std::size_t>(std::atoi(argv[++i]));
         } else if ((std::strcmp(argv[i], "--filter") == 0 ||
                     std::strcmp(argv[i], "-f") == 0) && i + 1 < argc) {
             filter = argv[++i];
+        } else if (std::strcmp(argv[i], "--demangle") == 0 || std::strcmp(argv[i], "-d") == 0) {
+            demangle_names = true;
         } else if (!path) {
             path = argv[i];
         }
     }
 
-    if (!path) {
+    if (!path || bad_flag) {
         std::fprintf(stderr,
-                     "usage: %s [--max-slots N] [--filter|-f SUBSTRING] <file.exe|file.dll>\n",
+                     "usage: %s [--max-slots N] [--filter|-f SUBSTRING] [--demangle|-d]"
+                     " [--color auto|always|never] <file.exe|file.dll>\n",
                      argc ? argv[0] : "vtable-dump");
         return 2;
     }
+    term::init(color);
+    const auto *B = term::bold(), *C = term::cyan(), *D = term::dim(), *M = term::magenta(),
+               *R = term::reset();
 
     auto image = read_file(path);
     auto view  = load_pe(image);
 
-    std::printf("[*] scanning for Complete Object Locators ...\n");
+    std::printf("%s[*] scanning for Complete Object Locators ...%s\n", D, R);
     const auto cols = scan_cols(view);
-    std::printf("    found %zu COL(s)\n", cols.size());
+    std::printf("%s    found %zu COL(s)%s\n", D, cols.size(), R);
 
-    std::printf("[*] scanning for vtables that reference them ...\n");
+    std::printf("%s[*] scanning for vtables that reference them ...%s\n", D, R);
     const auto vtables = find_vtables(view, cols);
     if (filter.empty()) {
-        std::printf("    found %zu vtable(s)\n\n", vtables.size());
+        std::printf("%s    found %zu vtable(s)%s\n\n", D, vtables.size(), R);
     } else {
-        std::printf("    found %zu vtable(s); filtering by '%s'\n\n",
-                    vtables.size(), filter.c_str());
+        std::printf("%s    found %zu vtable(s); filtering by '%s'%s\n\n", D,
+                    vtables.size(), filter.c_str(), R);
     }
 
     std::size_t shown = 0;
     for (const auto& vt : vtables) {
-        if (!filter.empty() && vt.class_name.find(filter) == std::string::npos) continue;
+        const auto pretty = demangle::type_info(vt.class_name);
+        if (!filter.empty() && vt.class_name.find(filter) == std::string::npos &&
+            pretty.find(filter) == std::string::npos) {
+            continue;
+        }
         ++shown;
-        std::printf("%s\n", vt.class_name.c_str());
-        std::printf("  vtable RVA : 0x%08lx\n", static_cast<unsigned long>(vt.vtable_rva));
-        std::printf("  slot count : %zu\n", vt.fn_rvas.size());
+        std::printf("%s%s%s%s\n", B, M, (demangle_names ? pretty : vt.class_name).c_str(), R);
+        std::printf("  vtable RVA : %s0x%08lx%s\n", C, static_cast<unsigned long>(vt.vtable_rva), R);
+        std::printf("  slot count : %s%zu%s\n", B, vt.fn_rvas.size(), R);
         const auto to_print = (vt.fn_rvas.size() < max_slots) ? vt.fn_rvas.size() : max_slots;
         for (std::size_t i = 0; i < to_print; ++i) {
-            std::printf("    [%2zu] fn @ RVA 0x%08lx\n", i,
-                        static_cast<unsigned long>(vt.fn_rvas[i]));
+            std::printf("    %s[%2zu]%s fn @ RVA %s0x%08lx%s\n", D, i, R, C,
+                        static_cast<unsigned long>(vt.fn_rvas[i]), R);
         }
         if (vt.fn_rvas.size() > to_print) {
-            std::printf("    ... (%zu more; use --max-slots N to show more)\n",
-                        vt.fn_rvas.size() - to_print);
+            std::printf("    %s... (%zu more; use --max-slots N to show more)%s\n", D,
+                        vt.fn_rvas.size() - to_print, R);
         }
         std::printf("\n");
     }
     if (!filter.empty()) {
-        std::printf("[*] %zu of %zu vtable(s) matched the filter\n",
-                    shown, vtables.size());
+        std::printf("%s[*] %zu of %zu vtable(s) matched the filter%s\n", D,
+                    shown, vtables.size(), R);
     }
     return 0;
 }

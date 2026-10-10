@@ -1,0 +1,19 @@
+[*] scanning for Complete Object Locators ...
+    found 14 COL(s)
+[*] scanning for vtables that reference them ...
+    found 14 vtable(s); filtering by 'io::Buffer'
+
+io::Buffer
+  vtable RVA : 0x00003208
+  slot count : 2
+    [ 0] fn @ RVA 0x00001010
+    [ 1] fn @ RVA 0x000011c0
+
+io::Buffer
+  vtable RVA : 0x00003220
+  slot count : 3
+    [ 0] fn @ RVA 0x00001000
+    [ 1] fn @ RVA 0x000011f0
+    [ 2] fn @ RVA 0x00001160
+
+[*] 2 of 14 vtable(s) matched the filter

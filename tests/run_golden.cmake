@@ -11,7 +11,8 @@ execute_process(
     COMMAND "${TOOL}" ${args}
     WORKING_DIRECTORY "${WORKDIR}"
     OUTPUT_VARIABLE actual
-    RESULT_VARIABLE rc)
+    RESULT_VARIABLE rc
+    ENCODING UTF8)
 
 if(NOT rc STREQUAL EXPECTED_RC)
     message(FATAL_ERROR "exit code was ${rc}, expected ${EXPECTED_RC}")
