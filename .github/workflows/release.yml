@@ -1,0 +1,51 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  create:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Create release from the tag message
+        run: gh release create "$GITHUB_REF_NAME" --title "vtable-dump $GITHUB_REF_NAME" --notes-from-tag --verify-tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  binaries:
+    needs: create
+    name: ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - { target: windows-x64, os: windows-latest, flags: '-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded' }
+          - { target: linux-x64, os: ubuntu-latest, flags: '-DCMAKE_EXE_LINKER_FLAGS=-static' }
+          - { target: macos-arm64, os: macos-latest, flags: '' }
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release ${{ matrix.flags }}
+          cmake --build build --config Release
+          ctest --test-dir build -C Release --output-on-failure
+      - name: Package and upload
+        shell: bash
+        run: |
+          name="vtable-dump-$GITHUB_REF_NAME-${{ matrix.target }}"
+          mkdir "$name"
+          if [ -f build/Release/vtable-dump.exe ]; then cp build/Release/vtable-dump.exe "$name/"; else cp build/vtable-dump "$name/"; fi
+          cp README.md LICENSE "$name/"
+          if [ "$RUNNER_OS" = Windows ]; then
+            7z a "$name.zip" "$name" > /dev/null && asset="$name.zip"
+          else
+            tar czf "$name.tar.gz" "$name" && asset="$name.tar.gz"
+          fi
+          gh release upload "$GITHUB_REF_NAME" "$asset"
+        env:
+          GH_TOKEN: ${{ github.token }}

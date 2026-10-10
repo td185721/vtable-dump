@@ -1,0 +1,89 @@
+[*] scanning for Complete Object Locators ...
+    found 14 COL(s)
+[*] scanning for vtables that reference them ...
+    found 14 vtable(s)
+
+.?AUCircle@shapes@@
+  vtable RVA : 0x000031c0
+  slot count : 3
+    [ 0] fn @ RVA 0x00001040
+    [ 1] fn @ RVA 0x00001130
+    [ 2] fn @ RVA 0x000011a0
+
+.?AUSquare@shapes@@
+  vtable RVA : 0x000031e8
+  slot count : 3
+    [ 0] fn @ RVA 0x00001040
+    [ 1] fn @ RVA 0x00001150
+    [ 2] fn @ RVA 0x000011b0
+
+.?AUBuffer@io@@
+  vtable RVA : 0x00003208
+  slot count : 2
+    [ 0] fn @ RVA 0x00001010
+    [ 1] fn @ RVA 0x000011c0
+
+.?AUBuffer@io@@
+  vtable RVA : 0x00003220
+  slot count : 3
+    [ 0] fn @ RVA 0x00001000
+    [ 1] fn @ RVA 0x000011f0
+    [ 2] fn @ RVA 0x00001160
+
+.?AUNode@@
+  vtable RVA : 0x00003240
+  slot count : 2
+    [ 0] fn @ RVA 0x000010d0
+    [ 1] fn @ RVA 0x00001190
+
+.?AULeft@@
+  vtable RVA : 0x00003258
+  slot count : 2
+    [ 0] fn @ RVA 0x000010a0
+    [ 1] fn @ RVA 0x00001180
+
+.?AURight@@
+  vtable RVA : 0x00003270
+  slot count : 1
+    [ 0] fn @ RVA 0x000011e0
+
+.?AURight@@
+  vtable RVA : 0x00003280
+  slot count : 2
+    [ 0] fn @ RVA 0x00001100
+    [ 1] fn @ RVA 0x00001190
+
+.?AUDiamond@@
+  vtable RVA : 0x00003298
+  slot count : 1
+    [ 0] fn @ RVA 0x000011d0
+
+.?AUDiamond@@
+  vtable RVA : 0x000032a8
+  slot count : 2
+    [ 0] fn @ RVA 0x00001070
+    [ 1] fn @ RVA 0x00001170
+
+.?AVtype_info@@
+  vtable RVA : 0x000032e0
+  slot count : 1
+    [ 0] fn @ RVA 0x0000143c
+
+.?AVexception@std@@
+  vtable RVA : 0x000032f8
+  slot count : 2
+    [ 0] fn @ RVA 0x000018c4
+    [ 1] fn @ RVA 0x00001948
+
+.?AVbad_alloc@std@@
+  vtable RVA : 0x00003328
+  slot count : 2
+    [ 0] fn @ RVA 0x000018c4
+    [ 1] fn @ RVA 0x00001948
+
+.?AVbad_array_new_length@std@@
+  vtable RVA : 0x00003350
+  slot count : 2
+    [ 0] fn @ RVA 0x000018c4
+    [ 1] fn @ RVA 0x00001948
+

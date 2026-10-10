@@ -20,9 +20,10 @@
 //      section (.text), treat them as virtual function pointers. Stop at
 //      the first non-text pointer or null.
 //
-// Build: CMake 3.15+, MSVC or MinGW-w64 (C++17). x64 PE only.
+// Build: CMake 3.15+, C++17 (MSVC, MinGW-w64, GCC or Clang). Reads x64 PE
+// files on any host OS.
 
-#include <windows.h>
+#include "pe_format.hpp"
 
 #include <cstdint>
 #include <cstdio>
@@ -46,6 +47,16 @@ struct CompleteObjectLocator {
     std::uint32_t pSelf;
 };
 #pragma pack(pop)
+
+// NUL-terminated string at `offset`, cut off at the end of the file if the
+// terminator is missing.
+std::string cstr_at(const unsigned char* data, std::size_t size, std::size_t offset) {
+    std::string out;
+    for (std::size_t i = offset; i < size && data[i] != 0; ++i) {
+        out.push_back(static_cast<char>(data[i]));
+    }
+    return out;
+}
 
 std::vector<unsigned char> read_file(const std::string& path) {
     std::ifstream in(path, std::ios::binary);
@@ -110,14 +121,26 @@ PEView load_pe(const std::vector<unsigned char>& image) {
         std::fprintf(stderr, "error: not a PE file\n");
         std::exit(1);
     }
-    const auto* nt = reinterpret_cast<const IMAGE_NT_HEADERS64*>(
-        image.data() + dos->e_lfanew);
+    const auto nt_off = static_cast<std::size_t>(static_cast<DWORD>(dos->e_lfanew));
+    if (nt_off > image.size() || image.size() - nt_off < sizeof(IMAGE_NT_HEADERS64)) {
+        std::fprintf(stderr, "error: NT headers lie outside the file\n");
+        std::exit(1);
+    }
+    const auto* nt = reinterpret_cast<const IMAGE_NT_HEADERS64*>(image.data() + nt_off);
     if (nt->Signature != IMAGE_NT_SIGNATURE) {
         std::fprintf(stderr, "error: missing PE signature\n");
         std::exit(1);
     }
     if (nt->OptionalHeader.Magic != IMAGE_NT_OPTIONAL_HDR64_MAGIC) {
         std::fprintf(stderr, "error: only x64 PE files are supported\n");
+        std::exit(1);
+    }
+    const auto sections_off = nt_off + offsetof(IMAGE_NT_HEADERS64, OptionalHeader) +
+                              nt->FileHeader.SizeOfOptionalHeader;
+    const auto sections_len = std::size_t{nt->FileHeader.NumberOfSections} *
+                              sizeof(IMAGE_SECTION_HEADER);
+    if (sections_off > image.size() || image.size() - sections_off < sections_len) {
+        std::fprintf(stderr, "error: section table lies outside the file\n");
         std::exit(1);
     }
     view.nt            = nt;
@@ -157,14 +180,14 @@ std::vector<COLInfo> scan_cols(const PEView& view) {
             // Resolve name from TypeDescriptor (name field at offset 16).
             const auto type_off = view.rva_to_offset(col->pTypeDescriptor);
             if (!type_off) continue;
-            const char* mangled = reinterpret_cast<const char*>(view.data + *type_off + 16);
             if (*type_off + 19 >= view.size) continue;
+            const char* mangled = reinterpret_cast<const char*>(view.data + *type_off + 16);
             if (mangled[0] != '.' || mangled[1] != '?') continue;
 
             COLInfo info;
             info.col_rva  = col_rva;
             info.type_rva = col->pTypeDescriptor;
-            info.name     = mangled;
+            info.name     = cstr_at(view.data, view.size, *type_off + 16);
             out.push_back(std::move(info));
         }
     }
